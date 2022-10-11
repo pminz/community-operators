@@ -1,0 +1,367 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "gingersnap-project.io/v1alpha1",
+          "kind": "Cache",
+          "metadata": {
+            "name": "cache-sample"
+          },
+          "spec": {
+            "infinispan": {}
+          }
+        },
+        {
+          "apiVersion": "gingersnap-project.io/v1alpha1",
+          "kind": "CacheRegion",
+          "metadata": {
+            "name": "cacheregion-sample"
+          },
+          "spec": null
+        }
+      ]
+    capabilities: Basic Install
+    operators.operatorframework.io/builder: operator-sdk-v1.22.2
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+  name: gingersnap.v0.0.2
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - kind: CacheRegion
+      name: cacheregions.gingersnap-project.io
+      version: v1alpha1
+    - kind: Cache
+      name: caches.gingersnap-project.io
+      version: v1alpha1
+  description: Gingersnap description. TODO.
+  displayName: Gingersnap
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments:
+      - label:
+          app.kubernetes.io/name: gingersnap-operator
+          control-plane: controller-manager
+        name: gingersnap-operator-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: gingersnap-operator
+              control-plane: controller-manager
+          strategy: {}
+          template:
+            metadata:
+              annotations:
+                kubectl.kubernetes.io/default-container: manager
+              labels:
+                app.kubernetes.io/name: gingersnap-operator
+                control-plane: controller-manager
+            spec:
+              containers:
+              - args:
+                - --leader-elect
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                image: quay.io/pminz/operator-images:0.0.2
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                ports:
+                - containerPort: 9443
+                  name: webhook-server
+                  protocol: TCP
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 128Mi
+                  requests:
+                    cpu: 10m
+                    memory: 64Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              serviceAccountName: gingersnap-operator-controller-manager
+              terminationGracePeriodSeconds: 10
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        - apiGroups:
+          - apps
+          resources:
+          - daemonsets
+          verbs:
+          - create
+          - delete
+          - deletecollection
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - pods
+          verbs:
+          - create
+          - delete
+          - deletecollection
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - secrets
+          - services
+          verbs:
+          - create
+          - delete
+          - deletecollection
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - gingersnap-project.io
+          resources:
+          - cacheregions
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - gingersnap-project.io
+          resources:
+          - cacheregions/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - gingersnap-project.io
+          resources:
+          - cacheregions/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - gingersnap-project.io
+          resources:
+          - caches
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - gingersnap-project.io
+          resources:
+          - caches/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - gingersnap-project.io
+          resources:
+          - caches/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - servicemonitors
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        serviceAccountName: gingersnap-operator-controller-manager
+    strategy: deployment
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - gingersnap
+  links:
+  - name: Gingersnap
+    url: https://gingersnap.domain
+  maintainers:
+  - email: your@email.com
+    name: Maintainer Name
+  maturity: alpha
+  provider:
+    name: Provider Name
+    url: https://your.domain
+  version: 0.0.2
+  webhookdefinitions:
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: gingersnap-operator-controller-manager
+    failurePolicy: Fail
+    generateName: mcache.kb.io
+    rules:
+    - apiGroups:
+      - gingersnap-project.io
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - caches
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-gingersnap-project-io-v1alpha1-cache
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: gingersnap-operator-controller-manager
+    failurePolicy: Fail
+    generateName: mcacheregion.kb.io
+    rules:
+    - apiGroups:
+      - gingersnap-project.io
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - cacheregions
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-gingersnap-project-io-v1alpha1-cacheregion
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: gingersnap-operator-controller-manager
+    failurePolicy: Fail
+    generateName: sidecar.gingersnap-project.io
+    rules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      resources:
+      - pods
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-v1-pod
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: gingersnap-operator-controller-manager
+    failurePolicy: Fail
+    generateName: vcache.kb.io
+    rules:
+    - apiGroups:
+      - gingersnap-project.io
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - caches
+    sideEffects: None
+    targetPort: 9443
+    type: ValidatingAdmissionWebhook
+    webhookPath: /validate-gingersnap-project-io-v1alpha1-cache
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: gingersnap-operator-controller-manager
+    failurePolicy: Fail
+    generateName: vcacheregion.kb.io
+    rules:
+    - apiGroups:
+      - gingersnap-project.io
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - cacheregions
+    sideEffects: None
+    targetPort: 9443
+    type: ValidatingAdmissionWebhook
+    webhookPath: /validate-gingersnap-project-io-v1alpha1-cacheregion
